@@ -110,73 +110,83 @@
       </footer>
     </section>
 
-    <!-- 對戰畫面（紅白機風格格鬥場景） -->
+    <!-- 對戰畫面（橫式滿版速度賽） -->
     <section id="screen-battle" class="screen battle-screen">
-      <!-- 上層：頂部 HUD（HP 條 + 賽程表 + 退出） -->
+      <!-- 頂部 HUD：HP + 角色 + 計分 -->
       <header class="bhud-top">
-        <button class="bquit-btn" id="b-quit" aria-label="退出對戰">✕</button>
-        <div class="bschedule">賽程表</div>
-        <div class="bhud-bars">
-          <div class="bhp-row">
-            <span class="bhp-label p1">P1</span>
+        <div class="bhud-side p1-side">
+          <div class="bhud-avatar p1"><img src="images/sprites/fighter-p1.png" alt="P1"/></div>
+          <div class="bhud-info">
+            <div class="bhud-name p1">P1</div>
             <div class="bhp p1-hp"><div class="bhp-fill" id="p1-hp-fill" style="width:100%"></div></div>
+            <div class="bhud-stats"><span class="streak p1">✓<span id="p1-correct">0</span></span> <span class="miss">✗<span id="p1-wrong">0</span></span></div>
           </div>
-          <div class="bround">ROUND <span id="b-round">1</span> / <span id="b-total">1</span></div>
-          <div class="bhp-row right">
+        </div>
+        <div class="bhud-center">
+          <button class="bquit-btn" id="b-quit" aria-label="退出對戰">✕</button>
+          <div class="bschedule">速度賽</div>
+          <div class="bvs-anim">VS</div>
+        </div>
+        <div class="bhud-side p2-side">
+          <div class="bhud-info right">
+            <div class="bhud-name p2">P2</div>
             <div class="bhp p2-hp"><div class="bhp-fill" id="p2-hp-fill" style="width:100%"></div></div>
-            <span class="bhp-label p2">P2</span>
+            <div class="bhud-stats"><span class="streak p2">✓<span id="p2-correct">0</span></span> <span class="miss">✗<span id="p2-wrong">0</span></span></div>
           </div>
+          <div class="bhud-avatar p2"><img src="images/sprites/fighter-p2.png" alt="P2"/></div>
         </div>
       </header>
 
-      <!-- 中層：格鬥場景 -->
-      <div class="bstage">
-        <!-- 城市背景圖（紅白機像素風 PNG） -->
-        <img class="bstage-bg-img" src="images/sprites/background.png" alt="" />
-        <!-- 對白框 (KO 時跳出) -->
-        <div class="bbubble bbubble-p1" id="b-bubble-p1" hidden><span id="b-bubble-p1-text"></span></div>
-        <div class="bbubble bbubble-p2" id="b-bubble-p2" hidden><span id="b-bubble-p2-text"></span></div>
-        <!-- P1 角色 (紅色機甲戰士) -->
-        <div class="fighter p1" id="p1-fighter">
-          <img src="images/sprites/fighter-p1.png" alt="P1 角色" />
-        </div>
-        <!-- P2 角色 (綠衣武術家) -->
-        <div class="fighter p2" id="p2-fighter">
-          <img src="images/sprites/fighter-p2.png" alt="P2 角色" />
-        </div>
-        <!-- 攻擊特效 -->
-        <div class="bhit" id="b-hit-p1" hidden>POW!</div>
-        <div class="bhit" id="b-hit-p2" hidden>BAM!</div>
-      </div>
-
-      <!-- 下層：題目 + 選項 -->
-      <main class="battle-body">
-        <div class="bqcard">
-          <div class="bqtext" id="b-q-text"></div>
-          <div class="bqimg-wrap" id="b-q-image-wrap" hidden>
-            <img id="b-q-image" alt="題目圖" />
+      <!-- 雙人作答區：左 P1 / 右 P2 -->
+      <main class="dual-arena">
+        <!-- P1 答題區 -->
+        <div class="parena p1">
+          <div class="parena-bg"></div>
+          <div class="parena-content">
+            <div class="parena-qcard">
+              <div class="parena-qtext" id="b-p1-qtext"></div>
+              <div class="parena-qimg-wrap" id="b-p1-qimg-wrap" hidden>
+                <img id="b-p1-qimg" alt="P1 題目圖" />
+              </div>
+            </div>
+            <div class="parena-options" id="b-p1-options" data-player="p1"></div>
+            <div class="parena-flash" id="b-p1-flash"></div>
           </div>
         </div>
-        <div class="boptions" id="b-options"></div>
-        <div class="bstatusrow">
-          <div class="bstatus p1" id="b-p1-status">等候作答…</div>
-          <div class="bstatus p2" id="b-p2-status">等候作答…</div>
-        </div>
-        <div class="bkeys">
-          <span class="p1-key">P1: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span>
-          <span class="vs-small">vs</span>
-          <span class="p2-key">P2: <kbd>0</kbd><kbd>-</kbd><kbd>=</kbd><kbd>\</kbd></span>
+        <!-- 中間分隔 -->
+        <div class="parena-divider"></div>
+        <!-- P2 答題區 -->
+        <div class="parena p2">
+          <div class="parena-bg"></div>
+          <div class="parena-content">
+            <div class="parena-qcard">
+              <div class="parena-qtext" id="b-p2-qtext"></div>
+              <div class="parena-qimg-wrap" id="b-p2-qimg-wrap" hidden>
+                <img id="b-p2-qimg" alt="P2 題目圖" />
+              </div>
+            </div>
+            <div class="parena-options" id="b-p2-options" data-player="p2"></div>
+            <div class="parena-flash" id="b-p2-flash"></div>
+          </div>
         </div>
       </main>
 
-      <footer class="battle-footer">
-        <div class="bbanner" id="b-banner"></div>
-        <button class="btn btn-primary big" id="b-next" hidden>下一回合</button>
+      <!-- 鍵盤提示（橫向時顯示） -->
+      <footer class="bkeys-footer">
+        <span class="p1-key">P1 鍵盤 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> 或 <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd></span>
+        <span class="vs-mini">⚔️</span>
+        <span class="p2-key">P2 鍵盤 <kbd>0</kbd><kbd>-</kbd><kbd>=</kbd><kbd>\</kbd> 或 <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd></span>
       </footer>
 
       <!-- KO 全螢幕特效 -->
       <div class="ko-overlay" id="ko-overlay" hidden>
         <div class="ko-text" id="ko-text">K.O.</div>
+      </div>
+
+      <!-- 直立提示（iPad/手機直拿時顯示） -->
+      <div class="rotate-hint" id="rotate-hint" hidden>
+        <div class="rotate-icon">📱↻</div>
+        <div class="rotate-text">請把裝置橫過來<br>雙人對戰需要橫式螢幕</div>
       </div>
     </section>
 

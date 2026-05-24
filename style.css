@@ -527,545 +527,367 @@ kbd {
   text-align: center;
 }
 
-/* ===== 對戰畫面 — 紅白機格鬥風 ===== */
+/* ===== 對戰畫面 — 橫式滿版雙人速度賽 ===== */
 .battle-screen {
-  max-width: 980px;
-  padding: 8px;
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
-  position: relative;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   gap: 0;
 }
+.battle-screen.active { display: flex; flex-direction: column; }
 
 /* === 頂部 HUD === */
 .bhud-top {
-  position: relative;
-  display: grid;
-  grid-template-columns: 36px auto 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px 10px;
-  background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
-  border: 3px solid #000;
-  border-radius: 6px;
-  box-shadow: 0 4px 0 #000, inset 0 -3px 0 rgba(0,0,0,0.3);
-}
-.bquit-btn {
-  width: 30px;
-  height: 30px;
-  border: 2px solid #000;
-  background: #e63946;
-  color: #fff;
-  font-weight: 900;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 2px 0 #000, inset 0 -2px 0 rgba(0,0,0,0.3);
-  padding: 0;
-}
-.bquit-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #000; }
-.bschedule {
-  background: #e63946;
-  color: #fff;
-  padding: 4px 12px;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: 0.15em;
-  border: 2px solid #000;
-  border-radius: 4px;
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
-}
-.bhud-bars {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #1e40af 0%, #0f1f6b 100%);
+  border-bottom: 3px solid #000;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
+  padding-top: max(8px, env(safe-area-inset-top));
 }
-.bhp-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.bhud-side { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bhud-side.p2-side { justify-content: flex-end; }
+
+.bhud-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  background: #fff;
+  flex: 0 0 56px;
 }
-.bhp-row.right {
-  justify-content: flex-end;
+.bhud-avatar.p1 { border-color: #ffd60a; box-shadow: 0 0 12px rgba(255, 214, 10, 0.6); }
+.bhud-avatar.p2 { border-color: #2ecc71; box-shadow: 0 0 12px rgba(46, 204, 113, 0.6); }
+.bhud-avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top;
 }
-.bhp-label {
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 0.05em;
-  color: #fff;
-  text-shadow: 2px 2px 0 #000;
-  padding: 2px 6px;
+.bhud-info {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;
 }
-.bhp-label.p1 { color: #ffd60a; }
-.bhp-label.p2 { color: #2ecc71; }
+.bhud-info.right { align-items: flex-end; }
+.bhud-name {
+  font-weight: 900; font-size: 14px; letter-spacing: 0.1em;
+  color: #fff; text-shadow: 2px 2px 0 #000;
+}
+.bhud-name.p1 { color: #ffd60a; }
+.bhud-name.p2 { color: #2ecc71; }
+
 .bhp {
   position: relative;
-  flex: 1;
-  max-width: 260px;
-  height: 16px;
+  width: 100%; max-width: 260px; height: 14px;
   background: #4b0d12;
   border: 2px solid #000;
   border-radius: 2px;
   overflow: hidden;
-  box-shadow: inset 0 2px 0 rgba(0,0,0,0.5);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.5);
 }
 .bhp-fill {
   height: 100%;
   transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  background-size: 12px 100%;
 }
-/* HP 條：飽和橘紅，像復古格鬥遊戲那種色階 */
 .p1-hp .bhp-fill {
-  background: repeating-linear-gradient(
-    90deg,
-    #ff4444 0,
-    #ff4444 6px,
-    #ff8800 6px,
-    #ff8800 12px
-  );
+  background: repeating-linear-gradient(90deg, #ff4444 0, #ff4444 6px, #ff8800 6px, #ff8800 12px);
   margin-left: auto;
 }
 .p1-hp { transform: scaleX(-1); }
 .p2-hp .bhp-fill {
-  background: repeating-linear-gradient(
-    90deg,
-    #ffcc00 0,
-    #ffcc00 6px,
-    #ff8800 6px,
-    #ff8800 12px
-  );
+  background: repeating-linear-gradient(90deg, #ffcc00 0, #ffcc00 6px, #ff8800 6px, #ff8800 12px);
 }
-.bround {
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  color: #fff;
-  font-weight: 900;
-  text-shadow: 2px 2px 0 #000;
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* === 格鬥場景 === */
-.bstage {
-  position: relative;
-  aspect-ratio: 1024 / 576;
-  max-height: 380px;
-  width: 100%;
-  margin: 0;
-  border-left: 3px solid #000;
-  border-right: 3px solid #000;
-  border-bottom: 3px solid #000;
-  background: #1976d2;
-  overflow: hidden;
-}
-/* 背景 PNG（HD pixel-art 風格） */
-.bstage-bg-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-  pointer-events: none;
-  /* HD 圖用標準 smooth scaling，避免邊緣鋸齒 */
-}
-
-/* === 角色 === */
-.fighter {
-  position: absolute;
-  bottom: 10px;
-  width: 110px;
-  height: 165px;
-  z-index: 2;
-  transition: transform 0.35s ease, filter 0.2s ease;
-  transform-origin: 50% 100%;
-}
-.fighter.p1 {
-  left: 10%;
-}
-.fighter.p2 {
-  right: 10%;
-  transform: scaleX(-1); /* P2 面向 P1 (向左) */
-}
-.fighter img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-  object-position: bottom center;
-  filter: drop-shadow(3px 4px 0 rgba(0,0,0,0.45));
-  /* HD 角色 — 用標準 smooth scaling，避免 alpha 邊鋸齒 */
-}
-/* 受傷 */
-@keyframes f-hurt {
-  0%, 100% { transform: translateX(0); filter: brightness(1); }
-  20% { transform: translateX(-12px) rotate(-3deg); filter: brightness(2) hue-rotate(0deg); }
-  40% { transform: translateX(10px) rotate(2deg); filter: brightness(1.5); }
-  60% { transform: translateX(-8px); filter: brightness(2); }
-  80% { transform: translateX(6px); filter: brightness(1.3); }
-}
-.fighter.p1.hurt { animation: f-hurt 0.55s ease; }
-.fighter.p2.hurt {
-  animation: f-hurt 0.55s ease;
-  /* P2 已經 scaleX(-1)，動畫需相對於它本身 */
-}
-/* P2 hurt 要保留鏡像 */
-@keyframes f-hurt-mirror {
-  0%, 100% { transform: scaleX(-1) translateX(0); filter: brightness(1); }
-  20% { transform: scaleX(-1) translateX(-12px) rotate(-3deg); filter: brightness(2); }
-  40% { transform: scaleX(-1) translateX(10px) rotate(2deg); filter: brightness(1.5); }
-  60% { transform: scaleX(-1) translateX(-8px); filter: brightness(2); }
-  80% { transform: scaleX(-1) translateX(6px); filter: brightness(1.3); }
-}
-.fighter.p2.hurt { animation: f-hurt-mirror 0.55s ease; }
-
-/* 勝利彈跳 */
-@keyframes f-victory {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-18px); }
-}
-@keyframes f-victory-mirror {
-  0%, 100% { transform: scaleX(-1) translateY(0); }
-  50% { transform: scaleX(-1) translateY(-18px); }
-}
-.fighter.p1.victory { animation: f-victory 0.55s ease-in-out infinite; }
-.fighter.p2.victory { animation: f-victory-mirror 0.55s ease-in-out infinite; }
-
-/* KO 倒地 */
-.fighter.ko {
-  transform: rotate(-85deg) translate(-30px, 10px);
-  filter: grayscale(0.3) brightness(0.85);
-}
-.fighter.p2.ko {
-  transform: scaleX(-1) rotate(-85deg) translate(-30px, 10px);
-}
-
-/* 攻擊特效字 (POW!) */
-.bhit {
-  position: absolute;
-  top: 30%;
-  font-family: -apple-system, "Impact", "Arial Black", sans-serif;
-  font-size: 36px;
-  font-weight: 900;
-  font-style: italic;
-  color: #ffd60a;
-  -webkit-text-stroke: 3px #000;
-  text-stroke: 3px #000;
-  text-shadow:
-    4px 4px 0 #c1272d,
-    -2px -2px 0 #fff;
-  letter-spacing: -2px;
-  z-index: 3;
-  animation: hit-pop 0.6s ease;
-  pointer-events: none;
-}
-#b-hit-p1 { left: 28%; }
-#b-hit-p2 { right: 28%; }
-@keyframes hit-pop {
-  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-  40% { transform: scale(1.3) rotate(8deg); opacity: 1; }
-  100% { transform: scale(1) rotate(-5deg); opacity: 1; }
-}
-
-/* 對白框 (KO 時) */
-.bbubble {
-  position: absolute;
-  top: 18%;
-  background: #fff;
-  border: 3px solid #000;
-  border-radius: 12px;
-  padding: 8px 14px;
-  font-weight: 900;
-  font-size: 14px;
-  color: #000;
-  z-index: 3;
-  max-width: 200px;
-  text-align: center;
-  box-shadow: 4px 4px 0 #000;
-  letter-spacing: 0.02em;
-  animation: bubble-in 0.3s ease;
-}
-.bbubble-p1 { left: 18%; }
-.bbubble-p2 { right: 18%; }
-/* 尖角指向角色 */
-.bbubble-p1::after {
-  content: '';
-  position: absolute;
-  bottom: -14px;
-  left: 30px;
-  border: 7px solid transparent;
-  border-top-color: #fff;
-  filter: drop-shadow(0 3px 0 #000);
-}
-.bbubble-p2::after {
-  content: '';
-  position: absolute;
-  bottom: -14px;
-  right: 30px;
-  border: 7px solid transparent;
-  border-top-color: #fff;
-  filter: drop-shadow(0 3px 0 #000);
-}
-@keyframes bubble-in {
-  0% { transform: scale(0); }
-  70% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-/* 對戰主區（紅白機風） */
-.battle-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  padding: 8px 0 0;
-  background: #87ceeb;
-  border-left: 3px solid #000;
-  border-right: 3px solid #000;
-  position: relative;
-}
-.battle-body::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255,255,255,0.04) 0,
-    rgba(255,255,255,0.04) 2px,
-    transparent 2px,
-    transparent 8px
-  );
-  pointer-events: none;
-}
-.bqcard {
-  background: #fff;
-  border: 3px solid #000;
-  border-radius: 6px;
-  padding: 10px 14px;
-  text-align: center;
-  margin: 0 8px;
-  box-shadow: 0 3px 0 #000;
-  position: relative;
-}
-.bqtext {
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #1a1a2e;
-}
-.bqimg-wrap { margin-top: 8px; display: flex; justify-content: center; }
-.bqimg-wrap img {
-  max-width: 100%;
-  max-height: 22vh;
-  border: 2px solid #000;
-  background: white;
-}
-
-.boptions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  padding: 0 8px;
-  position: relative;
-}
-.bopt {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: #fff;
-  border: 3px solid #000;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 900;
-  color: #1a1a2e;
-  text-align: left;
-  cursor: default;
-  transition: background 0.2s;
-  box-shadow: 0 3px 0 #000;
-  min-height: 38px;
-}
-.bopt-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-weight: 900;
-  font-size: 13px;
-  flex: 0 0 24px;
-  background: #ffd60a;
-  color: #000;
-  border: 2px solid #000;
-  border-radius: 3px;
-}
-.bopt-body {
-  flex: 1;
-  word-break: break-word;
-  line-height: 1.3;
-}
-.bopt-keys {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  font-size: 9px;
-  margin-left: auto;
-  text-align: right;
-  font-weight: 700;
-}
-.bopt-keys b { font-weight: 900; font-size: 10px; }
-.bopt-keys .k-p1 { color: #c1272d; }
-.bopt-keys .k-p2 { color: #2e7d32; }
-
-/* 鎖定時各方的標記 */
-.bopt .lock-p1, .bopt .lock-p2 {
-  position: absolute;
-  top: -10px;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 2px 6px;
-  border: 2px solid #000;
-  letter-spacing: 0.05em;
-  z-index: 2;
-  box-shadow: 0 2px 0 #000;
-}
-.bopt .lock-p1 {
-  left: 6px;
-  background: #c1272d;
-  color: #fff;
-}
-.bopt .lock-p2 {
-  right: 6px;
-  background: #2ecc71;
-  color: #000;
-}
-.bopt.reveal-correct {
-  background: #66bb6a;
-  color: #fff;
-}
-.bopt.reveal-correct .bopt-num { background: #fff; }
-.bopt.reveal-wrong {
-  background: #ef5350;
-  color: #fff;
-}
-.bopt.reveal-wrong .bopt-num { background: #fff; }
-
-.bstatusrow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 0 8px;
-  position: relative;
-}
-.bstatus {
-  padding: 6px 10px;
-  border: 2px solid #000;
-  font-weight: 900;
-  font-size: 12px;
-  text-align: center;
-  background: #fff;
-  transition: background 0.2s, color 0.2s;
-  box-shadow: 0 2px 0 #000;
-}
-.bstatus.p1 { color: #c1272d; }
-.bstatus.p2 { color: #2e7d32; }
-.bstatus.locked {
-  background: #ffd60a;
-  color: #000;
-}
-.bstatus.right {
-  background: #66bb6a;
-  color: #fff;
-}
-.bstatus.wrong {
-  background: #ef5350;
-  color: #fff;
-}
-
-.bkeys {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 11px;
-  color: #1a1a2e;
-  padding: 4px 8px;
-  position: relative;
-  font-weight: 700;
-}
-.p1-key { color: #c1272d; }
-.p2-key { color: #2e7d32; }
-.vs-small { color: #555; font-size: 10px; }
-
-/* footer */
-.battle-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px;
-  background: #87ceeb;
-  border: 3px solid #000;
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-}
-.bbanner {
-  min-height: 24px;
-  text-align: center;
-  font-weight: 900;
-  font-size: 16px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #1a1a2e;
-  text-shadow: 2px 2px 0 #fff;
-}
-.bbanner.p1-win { color: #c1272d; text-shadow: 2px 2px 0 #ffd60a; }
-.bbanner.p2-win { color: #2e7d32; text-shadow: 2px 2px 0 #ffd60a; }
-.bbanner.tie { color: #ff6f00; text-shadow: 2px 2px 0 #fff; }
-.bbanner.both-wrong { color: #4a148c; text-shadow: 2px 2px 0 #fff; }
-
-/* 紅白機按鈕：粗黑邊 + 立體下推 */
-#b-next, .nes-btn {
-  background: #ffd60a !important;
-  color: #000 !important;
-  border: 3px solid #000 !important;
-  border-radius: 4px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.08em !important;
-  box-shadow: 0 4px 0 #000 !important;
-  padding: 10px 24px !important;
-  transition: transform 0.06s, box-shadow 0.06s;
-  text-shadow: none !important;
-}
-#b-next:active, .nes-btn:active {
-  transform: translateY(4px) !important;
-  box-shadow: 0 0 0 #000 !important;
-}
-
-/* HP 搖動 */
+.bhp.hurt { animation: hp-shake 0.4s; }
 @keyframes hp-shake {
-  0%, 100% { transform: translateX(0); }
+  0%,100% { transform: translateX(0); }
   20% { transform: translateX(-5px); }
   40% { transform: translateX(5px); }
   60% { transform: translateX(-3px); }
   80% { transform: translateX(3px); }
 }
-.p1-hp { transform-origin: right; }
-.p2-hp { transform-origin: left; }
-/* P1-hp 已有 scaleX(-1)，搖動時需保留 */
-.p1-hp[style*='hp-shake'] { animation-name: hp-shake-mirror; }
+.p1-hp.hurt { animation-name: hp-shake-mirror; }
 @keyframes hp-shake-mirror {
-  0%, 100% { transform: scaleX(-1) translateX(0); }
+  0%,100% { transform: scaleX(-1) translateX(0); }
   20% { transform: scaleX(-1) translateX(-5px); }
   40% { transform: scaleX(-1) translateX(5px); }
   60% { transform: scaleX(-1) translateX(-3px); }
   80% { transform: scaleX(-1) translateX(3px); }
+}
+
+.bhud-stats {
+  display: flex; gap: 8px; font-size: 12px;
+  font-weight: 700; color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+.bhud-stats .streak.p1 { color: #ffd60a; }
+.bhud-stats .streak.p2 { color: #2ecc71; }
+.bhud-stats .miss { color: #ff8a8a; }
+
+/* 中央 HUD */
+.bhud-center {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  padding: 0 8px;
+}
+.bquit-btn {
+  width: 28px; height: 28px;
+  border: 2px solid #000;
+  background: #e63946;
+  color: #fff;
+  font-weight: 900; font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer; padding: 0;
+  box-shadow: 0 2px 0 #000;
+}
+.bquit-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #000; }
+.bschedule {
+  background: #e63946; color: #fff;
+  padding: 2px 10px;
+  font-weight: 900; font-size: 11px; letter-spacing: 0.15em;
+  border: 2px solid #000;
+  border-radius: 4px;
+}
+.bvs-anim {
+  font-size: 24px; font-weight: 900;
+  background: linear-gradient(135deg, #ffd479, #ff5f6d, #5b8cff);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  letter-spacing: 0.05em;
+  filter: drop-shadow(0 0 8px rgba(255, 213, 121, 0.5));
+  animation: vs-pulse 1.4s ease-in-out infinite;
+}
+@keyframes vs-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+/* === 雙人作答區 === */
+.dual-arena {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  background: #1e40af url('images/sprites/background.png') center/cover;
+  position: relative;
+}
+.parena {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.parena-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.parena.p1 .parena-bg {
+  background: linear-gradient(180deg, rgba(255, 235, 200, 0.88), rgba(255, 200, 150, 0.88));
+}
+.parena.p2 .parena-bg {
+  background: linear-gradient(180deg, rgba(200, 255, 220, 0.88), rgba(150, 230, 180, 0.88));
+}
+.parena-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  min-height: 0;
+}
+.parena-qcard {
+  flex: 0 0 auto;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 0 3px 0 #000;
+  max-height: 40%;
+  overflow-y: auto;
+}
+.parena-qtext {
+  font-size: clamp(14px, 1.6vw, 19px);
+  font-weight: 900;
+  line-height: 1.45;
+  word-break: break-word;
+  color: #1a1a2e;
+  white-space: pre-wrap;
+}
+.parena-qimg-wrap { margin-top: 8px; display: flex; justify-content: center; }
+.parena-qimg-wrap img {
+  max-width: 100%;
+  max-height: 14vh;
+  border: 2px solid #000;
+}
+
+.parena-options {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  min-height: 0;
+}
+.popt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 6px;
+  font-size: clamp(14px, 1.4vw, 18px);
+  font-weight: 900;
+  color: #1a1a2e;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #000;
+  transition: transform 0.06s, box-shadow 0.06s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  word-break: break-word;
+  line-height: 1.3;
+  min-height: 50px;
+}
+.popt:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #000;
+}
+.popt-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border: 2px solid #000;
+  border-radius: 3px;
+  font-weight: 900; font-size: 14px;
+  flex: 0 0 28px;
+}
+.parena.p1 .popt-num { background: #ffd60a; color: #000; }
+.parena.p2 .popt-num { background: #2ecc71; color: #000; }
+.popt-body { flex: 1; min-width: 0; }
+.popt.correct {
+  background: #66bb6a !important;
+  color: #fff !important;
+  border-color: #2e7d32 !important;
+  animation: opt-bounce 0.3s;
+}
+.popt.wrong {
+  background: #ef5350 !important;
+  color: #fff !important;
+  border-color: #c62828 !important;
+  animation: opt-shake 0.4s;
+}
+@keyframes opt-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px) scale(1.04); }
+}
+@keyframes opt-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* 答對 / 答錯時整片區域閃光 */
+.parena-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+}
+.parena-flash.right { background: rgba(56, 211, 159, 0.4); animation: flash-fade 0.5s; }
+.parena-flash.wrong { background: rgba(255, 95, 109, 0.4); animation: flash-fade 0.5s; }
+@keyframes flash-fade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 中間分隔線 */
+.parena-divider {
+  flex: 0 0 6px;
+  background: repeating-linear-gradient(45deg,
+    #000 0, #000 6px, #ffd60a 6px, #ffd60a 12px);
+  border-left: 2px solid #000;
+  border-right: 2px solid #000;
+  z-index: 2;
+}
+
+/* === 底部鍵盤提示 === */
+.bkeys-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 6px 10px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  background: #0b1020;
+  border-top: 2px solid #000;
+  font-size: 11px;
+  color: #ccc;
+  font-weight: 700;
+}
+.bkeys-footer .p1-key { color: #ffd60a; }
+.bkeys-footer .p2-key { color: #2ecc71; }
+.bkeys-footer .vs-mini { font-size: 14px; }
+
+/* 觸控裝置：放大按鈕、隱藏鍵盤提示 */
+@media (hover: none) and (pointer: coarse) {
+  .bkeys-footer { display: none; }
+  .popt { padding: 14px; font-size: clamp(15px, 2vw, 22px); min-height: 60px; }
+  .popt-num { width: 34px; height: 34px; flex: 0 0 34px; font-size: 16px; }
+}
+
+/* 直立提示 (portrait 模式) */
+.rotate-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: linear-gradient(135deg, #1e40af, #0f1f6b);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  gap: 24px;
+  padding: 20px;
+}
+.rotate-icon {
+  font-size: 96px;
+  animation: rotate-spin 2s ease-in-out infinite;
+}
+@keyframes rotate-spin {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(75deg); }
+}
+.rotate-text {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+/* 在 portrait + 窄螢幕（手機/iPad 直立）時，覆蓋對戰畫面 */
+@media (orientation: portrait) and (max-width: 900px) {
+  .battle-screen.active .rotate-hint { display: flex; }
 }
 
 /* 結算畫面 — 對戰模式的紅白機四色按鈕 */
@@ -1163,23 +985,6 @@ kbd {
 }
 
 /* 響應式 (窄螢幕) */
-@media (max-width: 520px) {
-  .battle-hud {
-    grid-template-columns: 60px 1fr 60px;
-    gap: 6px;
-    padding: 6px 2px;
-  }
-  .bavatar { width: 48px; height: 48px; font-size: 28px; border-width: 2px; }
-  .bname { font-size: 11px; }
-  .bhp { height: 18px; }
-  .bvs { font-size: 20px; }
-  .bround { font-size: 9px; }
-  .bqtext { font-size: 18px; }
-  .bopt { font-size: 14px; padding: 10px 12px; }
-  .bopt-num { width: 26px; height: 26px; flex: 0 0 26px; }
-  .bopt-keys { font-size: 9px; }
-}
-
 /* ===== 大螢幕 ===== */
 @media (min-width: 720px) {
   .hero-title { font-size: 64px; }

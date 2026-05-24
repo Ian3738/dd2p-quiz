@@ -368,7 +368,8 @@ $('#result-wrongs').addEventListener('click', () => {
   startSession(s.quiz, state.currentSetup, s.wrongList.slice());
 });
 
-// ===== ⚔️ 二人對戰模式 =====
+// ===== ⚔️ 二人對戰模式（速度賽：雙方獨立題目流） =====
+
 // 鍵盤映射（一個位置 → 答案 idx 1~4）
 const P1_KEYS = {
   '1': 1, '2': 2, '3': 3, '4': 4,
@@ -378,337 +379,193 @@ const P1_KEYS = {
 const P2_KEYS = {
   '0': 1, '-': 2, '=': 3, '\\': 4,
   'j': 1, 'k': 2, 'l': 3, ';': 4,
-  'J': 1, 'K': 2, 'L': 3, ':': 4,  // shift+; 是 :
+  'J': 1, 'K': 2, 'L': 3, ':': 4,
 };
 
 const BATTLE_CONFIG = {
   MAX_HP: 100,
-  RIGHT_DAMAGE: 25,   // 答對讓對方扣的 HP
-  WRONG_DAMAGE: 10,   // 答錯自己扣的 HP
+  HIT_DAMAGE: 15,    // 答對讓對方扣的 HP
+  SELF_DAMAGE: 8,    // 答錯自己扣的 HP
+  COOLDOWN: 250,     // 答完到下一題的冷卻 (ms)
 };
 
 function startBattle(quiz, setup) {
-  let qs = quiz.questions.slice();
-  if (setup.order === 'shuffle') shuffleInPlace(qs);
-  qs = qs.slice(0, setup.count);
+  // 雙方各自獨立洗牌一份題目流（題目可重複利用，不會用完）
+  function makeStream() {
+    let qs = quiz.questions.slice();
+    if (setup.order === 'shuffle') shuffleInPlace(qs);
+    // 速度賽不限題數，但複製多輪確保不會用完
+    return qs.concat(setup.order === 'shuffle' ? shuffleInPlace(quiz.questions.slice()) : quiz.questions.slice());
+  }
 
   state.battle = {
     quiz,
-    questions: qs,
-    idx: 0,
-    p1: { hp: BATTLE_CONFIG.MAX_HP, pick: null, correct: 0, wrong: 0 },
-    p2: { hp: BATTLE_CONFIG.MAX_HP, pick: null, correct: 0, wrong: 0 },
-    revealed: false,
+    p1: {
+      hp: BATTLE_CONFIG.MAX_HP,
+      correct: 0,
+      wrong: 0,
+      stream: makeStream(),
+      idx: 0,
+      locked: false,
+    },
+    p2: {
+      hp: BATTLE_CONFIG.MAX_HP,
+      correct: 0,
+      wrong: 0,
+      stream: makeStream(),
+      idx: 0,
+      locked: false,
+    },
     over: false,
   };
-  $('#b-total').textContent = String(qs.length);
-  renderBattleRound();
+  updateBattleHpUI();
+  updateBattleStats();
+  renderArena('p1');
+  renderArena('p2');
   showScreen('battle');
 }
 
-function renderBattleRound() {
+function renderArena(player) {
   const b = state.battle;
   if (!b) return;
-  const q = b.questions[b.idx];
+  const ps = b[player];
+  const q = ps.stream[ps.idx % ps.stream.length];
 
-  // 重置回合狀態
-  b.p1.pick = null;
-  b.p2.pick = null;
-  b.revealed = false;
+  const prefix = player === 'p1' ? 'b-p1-' : 'b-p2-';
+  const qtext = $(`#${prefix}qtext`);
+  const qimgWrap = $(`#${prefix}qimg-wrap`);
+  const qimg = $(`#${prefix}qimg`);
+  const opts = $(`#b-${player}-options`);
 
-  $('#b-round').textContent = String(b.idx + 1);
-  updateBattleHpUI();
-  $('#b-banner').textContent = '';
-  $('#b-banner').className = 'bbanner';
-  $('#b-next').hidden = true;
+  // 題目文字
+  qtext.innerHTML = renderBopomofo(q.q);
 
-  // 題目
-  $('#b-q-text').innerHTML = renderBopomofo(q.q);
-
-  // 題幹圖
-  const imgWrap = $('#b-q-image-wrap');
-  const img = $('#b-q-image');
+  // 題目圖
   if (q.q_image) {
-    img.src = q.q_image;
-    img.onerror = () => { imgWrap.hidden = true; };
-    imgWrap.hidden = false;
+    qimg.src = q.q_image;
+    qimg.onerror = () => { qimgWrap.hidden = true; };
+    qimgWrap.hidden = false;
   } else {
-    imgWrap.hidden = true;
-    img.removeAttribute('src');
+    qimgWrap.hidden = true;
+    qimg.removeAttribute('src');
   }
 
-  // 選項（中央共用）
-  const opts = $('#b-options');
+  // 4 選項
   opts.innerHTML = '';
   q.options.forEach((opt, i) => {
     const idx = i + 1;
-    const num = String.fromCharCode(64 + idx); // A B C D
-    // P1/P2 對應的鍵
-    const p1k = ['1', '2', '3', '4'][i] || '';
-    const p2k = ['0', '-', '=', '\\'][i] || '';
-    const div = document.createElement('div');
-    div.className = 'bopt';
-    div.dataset.idx = idx;
-    div.innerHTML = `
-      <span class="bopt-num">${num}</span>
-      <span class="bopt-body">${renderBopomofo(opt) || ''}</span>
-      <span class="bopt-keys">
-        <span class="k-p1"><b>P1</b> ${p1k}</span>
-        <span class="k-p2"><b>P2</b> ${p2k}</span>
-      </span>
+    const num = String.fromCharCode(64 + idx);
+    const btn = document.createElement('button');
+    btn.className = 'popt';
+    btn.type = 'button';
+    btn.dataset.idx = idx;
+    btn.innerHTML = `
+      <span class="popt-num">${num}</span>
+      <span class="popt-body">${renderBopomofo(opt) || ''}</span>
     `;
-    opts.appendChild(div);
+    btn.addEventListener('click', () => onPlayerAnswer(player, idx));
+    opts.appendChild(btn);
   });
 
-  // 狀態
-  setBStatus('p1', '等候作答…', '');
-  setBStatus('p2', '等候作答…', '');
-
-  // 角色回到「待機」狀態 + 隱藏對白框/特效
-  resetFighters();
+  ps.locked = false;
 }
 
-function resetFighters() {
-  for (const id of ['p1-fighter', 'p2-fighter']) {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('hurt', 'victory', 'ko');
-  }
-  for (const id of ['b-bubble-p1', 'b-bubble-p2', 'b-hit-p1', 'b-hit-p2']) {
-    const el = document.getElementById(id);
-    if (el) el.hidden = true;
-  }
-}
+function onPlayerAnswer(player, picked) {
+  const b = state.battle;
+  if (!b || b.over) return;
+  const ps = b[player];
+  if (ps.locked) return;
+  ps.locked = true;
+  const q = ps.stream[ps.idx % ps.stream.length];
+  const right = picked === q.answer;
+  const other = player === 'p1' ? 'p2' : 'p1';
 
-function setBStatus(player, text, cls) {
-  const el = $(`#b-${player}-status`);
-  el.textContent = text;
-  el.className = `bstatus ${player} ${cls || ''}`.trim();
+  // 標示對錯
+  const allBtns = $$(`#b-${player}-options .popt`);
+  allBtns.forEach((bt) => {
+    const i = parseInt(bt.dataset.idx, 10);
+    if (i === q.answer) bt.classList.add('correct');
+    if (i === picked && !right) bt.classList.add('wrong');
+  });
+
+  // 閃光
+  const flash = $(`#b-${player}-flash`);
+  if (flash) {
+    flash.style.animation = 'none';
+    void flash.offsetWidth;
+    flash.className = `parena-flash ${right ? 'right' : 'wrong'}`;
+  }
+
+  // 計分 / HP
+  if (right) {
+    ps.correct++;
+    b[other].hp = Math.max(0, b[other].hp - BATTLE_CONFIG.HIT_DAMAGE);
+    hpShake(other);
+  } else {
+    ps.wrong++;
+    ps.hp = Math.max(0, ps.hp - BATTLE_CONFIG.SELF_DAMAGE);
+    hpShake(player);
+  }
+  updateBattleHpUI();
+  updateBattleStats();
+
+  // 檢查 KO
+  if (b.p1.hp <= 0 || b.p2.hp <= 0) {
+    b.over = true;
+    setTimeout(showKO, 350);
+    return;
+  }
+
+  // 下一題（自己的）
+  setTimeout(() => {
+    ps.idx++;
+    renderArena(player);
+  }, BATTLE_CONFIG.COOLDOWN);
 }
 
 function updateBattleHpUI() {
   const b = state.battle;
-  const p1pct = Math.max(0, b.p1.hp);
-  const p2pct = Math.max(0, b.p2.hp);
-  $('#p1-hp-fill').style.width = `${p1pct}%`;
-  $('#p2-hp-fill').style.width = `${p2pct}%`;
+  if (!b) return;
+  $('#p1-hp-fill').style.width = `${Math.max(0, b.p1.hp)}%`;
+  $('#p2-hp-fill').style.width = `${Math.max(0, b.p2.hp)}%`;
 }
 
-function battlePick(player, idx) {
+function updateBattleStats() {
   const b = state.battle;
-  if (!b || b.revealed || b.over) return;
-  if (b[player].pick != null) return; // 已選
-  const q = b.questions[b.idx];
-  if (idx < 1 || idx > q.options.length) return;
-  b[player].pick = idx;
-  // 在對應選項標記
-  const opt = $(`.bopt[data-idx="${idx}"]`);
-  if (opt) {
-    if (!opt.querySelector(`.lock-${player}`)) {
-      const tag = document.createElement('span');
-      tag.className = `lock-${player}`;
-      tag.textContent = player.toUpperCase();
-      opt.appendChild(tag);
-    }
-  }
-  setBStatus(player, '已鎖定 ✓', 'locked');
-
-  // 雙方都選了 → 揭曉
-  if (b.p1.pick != null && b.p2.pick != null) {
-    setTimeout(revealBattleRound, 350);
-  }
+  if (!b) return;
+  $('#p1-correct').textContent = b.p1.correct;
+  $('#p1-wrong').textContent = b.p1.wrong;
+  $('#p2-correct').textContent = b.p2.correct;
+  $('#p2-wrong').textContent = b.p2.wrong;
 }
 
-function revealBattleRound() {
-  const b = state.battle;
-  if (!b || b.revealed) return;
-  b.revealed = true;
-  const q = b.questions[b.idx];
-  const correct = q.answer;
-
-  // 標示對錯
-  $$('.bopt').forEach((el) => {
-    const idx = parseInt(el.dataset.idx, 10);
-    if (idx === correct) el.classList.add('reveal-correct');
-    if ((idx === b.p1.pick || idx === b.p2.pick) && idx !== correct) {
-      el.classList.add('reveal-wrong');
-    }
-  });
-
-  const p1Right = b.p1.pick === correct;
-  const p2Right = b.p2.pick === correct;
-
-  // 計分 / 扣 HP
-  let p1Lose = 0, p2Lose = 0;
-  if (p1Right) { b.p1.correct++; p2Lose += BATTLE_CONFIG.RIGHT_DAMAGE; }
-  else         { b.p1.wrong++;   p1Lose += BATTLE_CONFIG.WRONG_DAMAGE; }
-  if (p2Right) { b.p2.correct++; p1Lose += BATTLE_CONFIG.RIGHT_DAMAGE; }
-  else         { b.p2.wrong++;   p2Lose += BATTLE_CONFIG.WRONG_DAMAGE; }
-
-  // 顯示狀態
-  setBStatus('p1', p1Right ? '答對！' : '答錯…', p1Right ? 'right' : 'wrong');
-  setBStatus('p2', p2Right ? '答對！' : '答錯…', p2Right ? 'right' : 'wrong');
-
-  // banner + 場景動畫
-  const banner = $('#b-banner');
-  if (p1Right && !p2Right) {
-    banner.textContent = 'P1 PERFECT! ⚡';
-    banner.className = 'bbanner p1-win';
-    fighterCheer('p1');
-    fighterHurt('p2');
-    showHit('p2', 'POW!');
-  } else if (p2Right && !p1Right) {
-    banner.textContent = 'P2 PERFECT! ⚡';
-    banner.className = 'bbanner p2-win';
-    fighterCheer('p2');
-    fighterHurt('p1');
-    showHit('p1', 'BAM!');
-  } else if (p1Right && p2Right) {
-    banner.textContent = 'DOUBLE HIT! 🔥';
-    banner.className = 'bbanner tie';
-    fighterCheer('p1');
-    fighterCheer('p2');
-    showHit('p1', 'POW!');
-    showHit('p2', 'BAM!');
-  } else {
-    banner.textContent = 'BOTH MISS… 💢';
-    banner.className = 'bbanner both-wrong';
-    fighterHurt('p1');
-    fighterHurt('p2');
-  }
-
-  // 套用 HP
-  setTimeout(() => {
-    b.p1.hp = Math.max(0, b.p1.hp - p1Lose);
-    b.p2.hp = Math.max(0, b.p2.hp - p2Lose);
-    updateBattleHpUI();
-
-    // 檢查 KO
-    if (b.p1.hp <= 0 || b.p2.hp <= 0) {
-      b.over = true;
-      setTimeout(showKO, 650);
-    } else if (b.idx + 1 >= b.questions.length) {
-      // 題目用完 → 結算
-      b.over = true;
-      setTimeout(showBattleResult, 800);
-    } else {
-      $('#b-next').hidden = false;
-    }
-  }, 380);
-}
-
-// 攻擊命中：在 target 旁邊跳出 POW / BAM 文字
-function showHit(target, text) {
-  const id = target === 'p1' ? '#b-hit-p1' : '#b-hit-p2';
-  const el = $(id);
-  if (!el) return;
-  el.textContent = text;
-  el.hidden = false;
-  // 重啟動畫
-  el.style.animation = 'none';
-  void el.offsetWidth;
-  el.style.animation = '';
-  setTimeout(() => { el.hidden = true; }, 700);
-}
-
-// 角色受傷：搖動 + HP 條也搖
-function fighterHurt(player) {
-  const f = $(`#${player}-fighter`);
+function hpShake(player) {
   const hp = $(`.${player}-hp`);
-  for (const el of [f]) {
-    if (!el) continue;
-    el.classList.remove('hurt');
-    void el.offsetWidth;
-    el.classList.add('hurt');
-    setTimeout(() => el.classList.remove('hurt'), 600);
-  }
-  if (hp) {
-    hp.style.animation = 'none';
-    void hp.offsetWidth;
-    hp.style.animation = 'hp-shake 0.4s ease';
-    setTimeout(() => hp.style.animation = '', 450);
-  }
+  if (!hp) return;
+  hp.classList.remove('hurt');
+  void hp.offsetWidth;
+  hp.classList.add('hurt');
+  setTimeout(() => hp.classList.remove('hurt'), 450);
 }
-
-// 答對：彈跳
-function fighterCheer(player) {
-  const f = $(`#${player}-fighter`);
-  if (!f) return;
-  f.classList.remove('victory');
-  void f.offsetWidth;
-  f.classList.add('victory');
-  setTimeout(() => f.classList.remove('victory'), 600);
-}
-
-// KO 對白框台詞（隨機挑）
-const KO_LINES = [
-  'SOMEBODY CALL 119 PLEASE…',
-  '我…我輸了…',
-  '太強了吧…',
-  '下次再戰！',
-  '不可能…',
-  '居然會輸…',
-];
-const WIN_LINES = [
-  '勝負已定！',
-  'YOU LOSE!',
-  '哈哈哈！',
-  '太弱了吧！',
-  'GG!',
-];
 
 function showKO() {
   const b = state.battle;
-  // 先讓被 KO 的角色倒下、勝者勝利姿勢、跳對白框
-  const p1Down = b.p1.hp <= 0;
-  const p2Down = b.p2.hp <= 0;
-  const f1 = $('#p1-fighter');
-  const f2 = $('#p2-fighter');
-  const bub1 = $('#b-bubble-p1');
-  const bub2 = $('#b-bubble-p2');
-  const bub1t = $('#b-bubble-p1-text');
-  const bub2t = $('#b-bubble-p2-text');
-
-  if (p1Down) {
-    f1.classList.add('ko');
-    bub1t.textContent = KO_LINES[Math.floor(Math.random() * KO_LINES.length)];
-    bub1.hidden = false;
-  }
-  if (p2Down) {
-    f2.classList.add('ko');
-    bub2t.textContent = KO_LINES[Math.floor(Math.random() * KO_LINES.length)];
-    bub2.hidden = false;
-  }
-  if (p1Down && !p2Down) {
-    f2.classList.add('victory');
-    bub2t.textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
-    bub2.hidden = false;
-  }
-  if (p2Down && !p1Down) {
-    f1.classList.add('victory');
-    bub1t.textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
-    bub1.hidden = false;
-  }
-
-  // 0.5 秒後跳出 K.O. overlay
+  if (!b) return;
+  const overlay = $('#ko-overlay');
+  const text = $('#ko-text');
+  let label = 'K.O.';
+  if (b.p1.hp <= 0 && b.p2.hp <= 0) label = 'DRAW';
+  text.textContent = label;
+  overlay.hidden = false;
   setTimeout(() => {
-    const overlay = $('#ko-overlay');
-    const text = $('#ko-text');
-    let label = 'K.O.';
-    if (p1Down && p2Down) label = 'DRAW';
-    text.textContent = label;
-    overlay.hidden = false;
-    // 1.8 秒後跳結算
-    setTimeout(() => {
-      overlay.hidden = true;
-      showBattleResult();
-    }, 1800);
-  }, 500);
+    overlay.hidden = true;
+    showBattleResult();
+  }, 1800);
 }
 
 function showBattleResult() {
   const b = state.battle;
   if (!b) return;
-  // 判勝負
   let winner = null;
   if (b.p1.hp > b.p2.hp) winner = 'p1';
   else if (b.p2.hp > b.p1.hp) winner = 'p2';
@@ -721,43 +578,29 @@ function showBattleResult() {
   else { medal = '🤝'; title = 'DRAW'; }
   $('#result-medal').textContent = medal;
   $('#result-title').textContent = title;
-  $('#result-name').textContent = `${b.quiz.name} · ⚔️ 對戰模式`;
+  $('#result-name').textContent = `${b.quiz.name} · ⚔️ 速度賽`;
 
-  // 結算用三欄：P1分數 / P2分數 / 回合數
   $('#result-correct').textContent = `${b.p1.correct} vs ${b.p2.correct}`;
   $('#result-wrong').textContent = `${b.p1.hp} vs ${b.p2.hp}`;
-  $('#result-rate').textContent = `${b.idx + 1}/${b.questions.length}`;
+  $('#result-rate').textContent = `${b.p1.correct + b.p1.wrong} | ${b.p2.correct + b.p2.wrong}`;
 
-  // 修改 stat 標籤
   const stats = document.querySelectorAll('#screen-result .stat-label');
   if (stats[0]) stats[0].textContent = '答對 P1 vs P2';
-  if (stats[1]) stats[1].textContent = 'HP P1 vs P2';
-  if (stats[2]) stats[2].textContent = '完成回合';
+  if (stats[1]) stats[1].textContent = '剩餘 HP P1 vs P2';
+  if (stats[2]) stats[2].textContent = '總作答 P1 | P2';
 
-  // 紅白機四色按鈕：重新再玩 / 到主選單 / 換一個題庫
   $('#result-wrongs').hidden = true;
   $('#screen-result').classList.add('is-battle');
-  $('#result-retry').innerHTML = '重新再玩<span class="en">RESTART</span>';
-  $$('#screen-result .result-actions [data-go="categories"]').forEach(b => {
+  $('#result-retry').innerHTML = '重新再戰<span class="en">REMATCH</span>';
+  $$('#screen-result .result-actions [data-go="categories"]').forEach((b) => {
     b.innerHTML = '到前一選單<span class="en">PREV MENU</span>';
   });
-  $$('#screen-result .result-actions [data-go="home"]').forEach(b => {
+  $$('#screen-result .result-actions [data-go="home"]').forEach((b) => {
     b.innerHTML = '到主選單<span class="en">MAIN MENU</span>';
   });
   showScreen('result');
   state.battle = null;
 }
-
-$('#b-next').addEventListener('click', () => {
-  const b = state.battle;
-  if (!b) return;
-  b.idx++;
-  if (b.idx >= b.questions.length || b.over) {
-    showBattleResult();
-  } else {
-    renderBattleRound();
-  }
-});
 
 $('#b-quit').addEventListener('click', () => {
   if (!state.battle) return showScreen('home');
@@ -788,24 +631,16 @@ document.addEventListener('keydown', (e) => {
   const upper = key.length === 1 ? key.toUpperCase() : key;
 
   if (active === 'screen-battle') {
-    // P1
+    // P1 答題鍵（1234 / ASDF）
     if (P1_KEYS[key] !== undefined) {
-      battlePick('p1', P1_KEYS[key]);
+      onPlayerAnswer('p1', P1_KEYS[key]);
       e.preventDefault();
       return;
     }
-    // P2
+    // P2 答題鍵（0-=\ / JKL;）
     if (P2_KEYS[key] !== undefined) {
-      battlePick('p2', P2_KEYS[key]);
+      onPlayerAnswer('p2', P2_KEYS[key]);
       e.preventDefault();
-      return;
-    }
-    if (key === 'Enter' || key === ' ') {
-      const n = $('#b-next');
-      if (n && !n.hidden) {
-        n.click();
-        e.preventDefault();
-      }
       return;
     }
     if (key === 'Escape') {
