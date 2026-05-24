@@ -889,8 +889,15 @@ document.addEventListener('keydown', (e) => {
 })();
 
 // 註冊 Service Worker（PWA 離線快取）— 只在 https 或 localhost 才會跑
+// 當新版本 SW 接管時，自動 reload 一次讓使用者立刻看到新內容
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return;
+    reloaded = true;
+    window.location.reload();
   });
 }

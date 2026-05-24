@@ -1,5 +1,5 @@
-// Simple cache-first service worker for offline play
-const CACHE = 'dd2p-v1';
+// 升 cache 版本號就會 invalidate 舊快取
+const CACHE = 'dd2p-v3-hd-sprites';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,9 @@ const ASSETS = [
   './quizzes.json',
   './icon-180.png',
   './icon-512.png',
+  './images/sprites/background.png',
+  './images/sprites/fighter-p1.png',
+  './images/sprites/fighter-p2.png',
 ];
 
 self.addEventListener('install', (e) => {
@@ -27,21 +30,38 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// === Network-first 給 sprites/HTML/CSS/JS（讓更新立刻看到）===
+// === Cache-first 給題目圖片/題庫 JSON（量大且不常變動）===
+const NETWORK_FIRST = /\/(index\.html|style\.css|game\.js|manifest\.json|images\/sprites\/)/;
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-  e.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        // 動態快取 images/ 與其它資源
-        const url = new URL(req.url);
-        if (url.origin === location.origin) {
+  const url = new URL(req.url);
+  const useNetworkFirst = NETWORK_FIRST.test(url.pathname) || url.pathname === '/' || url.pathname.endsWith('/');
+
+  if (useNetworkFirst) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        if (url.origin === location.origin && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         }
         return res;
-      }).catch(() => hit);
-    })
-  );
+      }).catch(() => caches.match(req))
+    );
+  } else {
+    e.respondWith(
+      caches.match(req).then((hit) => {
+        if (hit) return hit;
+        return fetch(req).then((res) => {
+          if (url.origin === location.origin) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
+          return res;
+        }).catch(() => hit);
+      })
+    );
+  }
 });
