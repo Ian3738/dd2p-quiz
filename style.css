@@ -659,7 +659,7 @@ kbd {
   background: #1976d2;
   overflow: hidden;
 }
-/* 背景 PNG（紅白機像素風） */
+/* 背景 PNG（HD pixel-art 風格） */
 .bstage-bg-img {
   position: absolute;
   inset: 0;
@@ -669,10 +669,7 @@ kbd {
   object-position: center;
   z-index: 0;
   pointer-events: none;
-  /* 保持像素化（不抗鋸齒） */
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+  /* HD 圖用標準 smooth scaling，避免邊緣鋸齒 */
 }
 
 /* === 角色 === */
@@ -699,9 +696,7 @@ kbd {
   object-fit: contain;
   object-position: bottom center;
   filter: drop-shadow(3px 4px 0 rgba(0,0,0,0.45));
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+  /* HD 角色 — 用標準 smooth scaling，避免 alpha 邊鋸齒 */
 }
 /* 受傷 */
 @keyframes f-hurt {
