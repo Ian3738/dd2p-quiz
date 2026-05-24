@@ -671,13 +671,146 @@ kbd {
   50% { transform: scale(1.12); }
 }
 
-/* === 雙人作答區 === */
+/* === 中央格鬥場景 === */
+.bstage {
+  flex: 0 0 auto;
+  position: relative;
+  height: 28vh;
+  min-height: 180px;
+  max-height: 280px;
+  background: #1e40af;
+  border-bottom: 3px solid #000;
+  overflow: hidden;
+}
+.bstage-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+.fighter {
+  position: absolute;
+  bottom: 6px;
+  height: 90%;
+  aspect-ratio: 893 / 1600;
+  z-index: 2;
+  transition: transform 0.35s ease, filter 0.2s ease;
+  transform-origin: 50% 100%;
+}
+.fighter.p1 { left: 8%; }
+.fighter.p2 { right: 8%; transform: scaleX(-1); }
+.fighter img {
+  width: 100%; height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.45));
+}
+
+/* 角色動畫 */
+@keyframes f-hurt {
+  0%,100% { transform: translateX(0); filter: brightness(1); }
+  20% { transform: translateX(-12px); filter: brightness(2); }
+  40% { transform: translateX(10px); filter: brightness(1.5); }
+  60% { transform: translateX(-8px); filter: brightness(2); }
+  80% { transform: translateX(6px); filter: brightness(1.3); }
+}
+@keyframes f-hurt-mirror {
+  0%,100% { transform: scaleX(-1) translateX(0); filter: brightness(1); }
+  20% { transform: scaleX(-1) translateX(-12px); filter: brightness(2); }
+  40% { transform: scaleX(-1) translateX(10px); filter: brightness(1.5); }
+  60% { transform: scaleX(-1) translateX(-8px); filter: brightness(2); }
+  80% { transform: scaleX(-1) translateX(6px); filter: brightness(1.3); }
+}
+.fighter.p1.hurt { animation: f-hurt 0.55s ease; }
+.fighter.p2.hurt { animation: f-hurt-mirror 0.55s ease; }
+@keyframes f-victory {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes f-victory-mirror {
+  0%,100% { transform: scaleX(-1) translateY(0); }
+  50% { transform: scaleX(-1) translateY(-12px); }
+}
+.fighter.p1.victory { animation: f-victory 0.55s ease-in-out infinite; }
+.fighter.p2.victory { animation: f-victory-mirror 0.55s ease-in-out infinite; }
+.fighter.p1.ko {
+  transform: rotate(-85deg) translate(-30px, 10px);
+  filter: grayscale(0.3) brightness(0.85);
+}
+.fighter.p2.ko {
+  transform: scaleX(-1) rotate(-85deg) translate(-30px, 10px);
+  filter: grayscale(0.3) brightness(0.85);
+}
+
+/* POW! / BAM! 攻擊特效 */
+.bhit {
+  position: absolute;
+  top: 30%;
+  font-family: -apple-system, "Impact", "Arial Black", sans-serif;
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 900;
+  font-style: italic;
+  color: #ffd60a;
+  -webkit-text-stroke: 3px #000;
+  text-shadow: 4px 4px 0 #c1272d, -2px -2px 0 #fff;
+  letter-spacing: -2px;
+  z-index: 3;
+  animation: hit-pop 0.6s ease;
+  pointer-events: none;
+}
+#b-hit-p1 { left: 22%; }
+#b-hit-p2 { right: 22%; }
+@keyframes hit-pop {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  40% { transform: scale(1.3) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-5deg); opacity: 1; }
+}
+
+/* 對白框 (KO 時) */
+.bbubble {
+  position: absolute;
+  top: 12%;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-weight: 900;
+  font-size: clamp(12px, 1.3vw, 16px);
+  color: #000;
+  z-index: 3;
+  max-width: 220px;
+  text-align: center;
+  box-shadow: 4px 4px 0 #000;
+  animation: bubble-in 0.3s ease;
+}
+.bbubble-p1 { left: 16%; }
+.bbubble-p2 { right: 16%; }
+.bbubble-p1::after, .bbubble-p2::after {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  border: 7px solid transparent;
+  border-top-color: #fff;
+  filter: drop-shadow(0 3px 0 #000);
+}
+.bbubble-p1::after { left: 30px; }
+.bbubble-p2::after { right: 30px; }
+@keyframes bubble-in {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* === 雙人作答區（下半） === */
 .dual-arena {
   flex: 1;
   display: flex;
   flex-direction: row;
   min-height: 0;
-  background: #1e40af url('images/sprites/background.png') center/cover;
+  background: #1e40af;
   position: relative;
 }
 .parena {

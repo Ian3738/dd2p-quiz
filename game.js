@@ -418,11 +418,24 @@ function startBattle(quiz, setup) {
     },
     over: false,
   };
+  // 重置場景（移除上一場的 ko/victory/hurt + 隱藏對白框）
+  resetStage();
   updateBattleHpUI();
   updateBattleStats();
   renderArena('p1');
   renderArena('p2');
   showScreen('battle');
+}
+
+function resetStage() {
+  for (const id of ['p1-fighter', 'p2-fighter']) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hurt', 'victory', 'ko');
+  }
+  for (const id of ['b-bubble-p1', 'b-bubble-p2', 'b-hit-p1', 'b-hit-p2']) {
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  }
 }
 
 function renderArena(player) {
@@ -496,15 +509,18 @@ function onPlayerAnswer(player, picked) {
     flash.className = `parena-flash ${right ? 'right' : 'wrong'}`;
   }
 
-  // 計分 / HP
+  // 計分 / HP / 角色動畫
   if (right) {
     ps.correct++;
     b[other].hp = Math.max(0, b[other].hp - BATTLE_CONFIG.HIT_DAMAGE);
     hpShake(other);
+    fighterHurt(other);
+    showHit(other, player === 'p1' ? 'POW!' : 'BAM!');
   } else {
     ps.wrong++;
     ps.hp = Math.max(0, ps.hp - BATTLE_CONFIG.SELF_DAMAGE);
     hpShake(player);
+    fighterHurt(player);
   }
   updateBattleHpUI();
   updateBattleStats();
@@ -548,19 +564,89 @@ function hpShake(player) {
   setTimeout(() => hp.classList.remove('hurt'), 450);
 }
 
+// 角色受傷震動
+function fighterHurt(player) {
+  const f = document.getElementById(`${player}-fighter`);
+  if (!f) return;
+  f.classList.remove('hurt');
+  void f.offsetWidth;
+  f.classList.add('hurt');
+  setTimeout(() => f.classList.remove('hurt'), 600);
+}
+
+// POW! / BAM! 文字
+function showHit(target, text) {
+  const el = $(`#b-hit-${target}`);
+  if (!el) return;
+  el.textContent = text;
+  el.hidden = false;
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = '';
+  setTimeout(() => { el.hidden = true; }, 700);
+}
+
+// KO 對白框台詞
+const KO_LINES = [
+  'SOMEBODY CALL 119 PLEASE…',
+  '我…我輸了…',
+  '太強了吧…',
+  '下次再戰！',
+  '不可能…',
+  '居然會輸…',
+];
+const WIN_LINES = [
+  '勝負已定！',
+  'YOU LOSE!',
+  '哈哈哈！',
+  '太弱了吧！',
+  'GG!',
+];
+
 function showKO() {
   const b = state.battle;
   if (!b) return;
-  const overlay = $('#ko-overlay');
-  const text = $('#ko-text');
-  let label = 'K.O.';
-  if (b.p1.hp <= 0 && b.p2.hp <= 0) label = 'DRAW';
-  text.textContent = label;
-  overlay.hidden = false;
+  const p1Down = b.p1.hp <= 0;
+  const p2Down = b.p2.hp <= 0;
+  const f1 = document.getElementById('p1-fighter');
+  const f2 = document.getElementById('p2-fighter');
+  const bub1 = $('#b-bubble-p1');
+  const bub2 = $('#b-bubble-p2');
+  const bub1t = $('#b-bubble-p1-text');
+  const bub2t = $('#b-bubble-p2-text');
+
+  // 倒下 / 勝利姿勢 + 對白框
+  if (p1Down) {
+    f1?.classList.add('ko');
+    bub1t.textContent = KO_LINES[Math.floor(Math.random() * KO_LINES.length)];
+    bub1.hidden = false;
+  }
+  if (p2Down) {
+    f2?.classList.add('ko');
+    bub2t.textContent = KO_LINES[Math.floor(Math.random() * KO_LINES.length)];
+    bub2.hidden = false;
+  }
+  if (p1Down && !p2Down) {
+    f2?.classList.add('victory');
+    bub2t.textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
+    bub2.hidden = false;
+  }
+  if (p2Down && !p1Down) {
+    f1?.classList.add('victory');
+    bub1t.textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
+    bub1.hidden = false;
+  }
+
   setTimeout(() => {
-    overlay.hidden = true;
-    showBattleResult();
-  }, 1800);
+    const overlay = $('#ko-overlay');
+    const text = $('#ko-text');
+    text.textContent = p1Down && p2Down ? 'DRAW' : 'K.O.';
+    overlay.hidden = false;
+    setTimeout(() => {
+      overlay.hidden = true;
+      showBattleResult();
+    }, 1800);
+  }, 500);
 }
 
 function showBattleResult() {

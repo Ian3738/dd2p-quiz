@@ -1,5 +1,5 @@
 // 升 cache 版本號就會 invalidate 舊快取
-const CACHE = 'dd2p-v5-speed-battle';
+const CACHE = 'dd2p-v6-stage-speed-battle';
 const ASSETS = [
   './',
   './index.html',

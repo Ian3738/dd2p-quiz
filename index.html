@@ -137,7 +137,26 @@
         </div>
       </header>
 
-      <!-- 雙人作答區：左 P1 / 右 P2 -->
+      <!-- 中央格鬥場景 (角色 + 背景) -->
+      <div class="bstage">
+        <img class="bstage-bg-img" src="images/sprites/background.png" alt="" />
+        <!-- 對白框 (KO 時) -->
+        <div class="bbubble bbubble-p1" id="b-bubble-p1" hidden><span id="b-bubble-p1-text"></span></div>
+        <div class="bbubble bbubble-p2" id="b-bubble-p2" hidden><span id="b-bubble-p2-text"></span></div>
+        <!-- P1 全身角色 -->
+        <div class="fighter p1" id="p1-fighter">
+          <img src="images/sprites/fighter-p1.png" alt="P1" />
+        </div>
+        <!-- P2 全身角色 -->
+        <div class="fighter p2" id="p2-fighter">
+          <img src="images/sprites/fighter-p2.png" alt="P2" />
+        </div>
+        <!-- 攻擊特效 -->
+        <div class="bhit" id="b-hit-p1" hidden>POW!</div>
+        <div class="bhit" id="b-hit-p2" hidden>BAM!</div>
+      </div>
+
+      <!-- 雙人作答區：左 P1 / 右 P2（題目各自獨立） -->
       <main class="dual-arena">
         <!-- P1 答題區 -->
         <div class="parena p1">
