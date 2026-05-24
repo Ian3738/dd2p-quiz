@@ -1,5 +1,5 @@
 // 升 cache 版本號就會 invalidate 舊快取
-const CACHE = 'dd2p-v3-hd-sprites';
+const CACHE = 'dd2p-v4-kang-hsuan-quiz';
 const ASSETS = [
   './',
   './index.html',
@@ -30,9 +30,9 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// === Network-first 給 sprites/HTML/CSS/JS（讓更新立刻看到）===
-// === Cache-first 給題目圖片/題庫 JSON（量大且不常變動）===
-const NETWORK_FIRST = /\/(index\.html|style\.css|game\.js|manifest\.json|images\/sprites\/)/;
+// === Network-first 給 sprites/HTML/CSS/JS/題庫 JSON（讓更新立刻看到）===
+// === Cache-first 給題目圖片（量大且不常變動）===
+const NETWORK_FIRST = /\/(index\.html|style\.css|game\.js|manifest\.json|quizzes\.json|images\/sprites\/)/;
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
