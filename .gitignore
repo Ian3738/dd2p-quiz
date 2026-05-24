@@ -1,0 +1,9 @@
+.DS_Store
+.claude/
+_extracted/
+node_modules/
+*.log
+
+# 本地建置腳本（不需上傳）
+_build_quizzes.py
+_make_icons.py

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="答答二人組" />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="icon" type="image/png" href="icon-180.png" />
+  <link rel="stylesheet" href="style.css" />
+  <title>答答二人組（iOS 版）</title>
+</head>
+<body>
+  <div id="app">
+    <!-- 主選單 -->
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <div class="hero-badge">DD2P</div>
+        <h1 class="hero-title">答答<span>二人組</span></h1>
+        <p class="hero-sub">iOS 觸控版 · 13,000+ 題</p>
+      </div>
+      <div class="home-actions">
+        <button class="btn btn-primary big" data-go="categories">開始遊戲</button>
+        <button class="btn" data-go="about">關於 / 操作說明</button>
+      </div>
+      <p class="home-footer">原作：DD2P_Share8C_2017 (AJ) · 重製為 HTML5</p>
+    </section>
+
+    <!-- 題庫選單 -->
+    <section id="screen-categories" class="screen">
+      <header class="topbar">
+        <button class="iconbtn" data-go="home" aria-label="回主選單">←</button>
+        <h2>選擇題庫</h2>
+        <div class="topbar-right">
+          <input type="search" id="search-input" placeholder="搜尋題庫…" autocomplete="off" />
+        </div>
+      </header>
+      <ul id="category-list" class="category-list"></ul>
+    </section>
+
+    <!-- 答題前的設定 -->
+    <section id="screen-setup" class="screen">
+      <header class="topbar">
+        <button class="iconbtn" data-go="categories" aria-label="回題庫">←</button>
+        <h2 id="setup-title">準備開始</h2>
+      </header>
+      <div class="setup-body">
+        <p id="setup-meta" class="setup-meta"></p>
+        <div class="setup-row">
+          <label>模式</label>
+          <div class="seg" id="setup-mode">
+            <button data-val="solo" class="active">🧘 單人練習</button>
+            <button data-val="battle">⚔️ 二人對戰</button>
+          </div>
+        </div>
+        <div class="setup-row">
+          <label>題數</label>
+          <div class="seg" id="setup-count"></div>
+        </div>
+        <div class="setup-row">
+          <label>順序</label>
+          <div class="seg" id="setup-order">
+            <button data-val="shuffle" class="active">隨機</button>
+            <button data-val="ordered">依序</button>
+          </div>
+        </div>
+        <div id="setup-battle-hint" class="battle-hint" hidden>
+          <div class="bh-title">⚔️ 對戰模式說明</div>
+          <div class="bh-row"><span class="bh-tag p1">P1</span> 鍵盤左側 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> 或 <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd></div>
+          <div class="bh-row"><span class="bh-tag p2">P2</span> 鍵盤右側 <kbd>0</kbd><kbd>-</kbd><kbd>=</kbd><kbd>\</kbd> 或 <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd></div>
+          <div class="bh-row tiny">雙方同時作答 · 答對讓對方 −25 HP · 答錯自己 −10 HP · 先 KO 對方者勝</div>
+        </div>
+        <button id="setup-start" class="btn btn-primary big">開始作答</button>
+      </div>
+    </section>
+
+    <!-- 答題畫面 -->
+    <section id="screen-quiz" class="screen">
+      <header class="topbar">
+        <button class="iconbtn" id="quiz-quit" aria-label="退出">✕</button>
+        <div class="topbar-center">
+          <div class="qprogress">
+            <span id="q-index">1</span> / <span id="q-total">1</span>
+          </div>
+          <div class="qbar"><div class="qbar-fill" id="q-bar-fill"></div></div>
+        </div>
+        <div class="topbar-right">
+          <div class="score-chip">
+            <span class="score-correct" id="score-correct">0</span>
+            <span class="score-sep">/</span>
+            <span class="score-wrong" id="score-wrong">0</span>
+          </div>
+        </div>
+      </header>
+      <main class="quiz-body">
+        <div class="qcard">
+          <div class="qcard-text" id="q-text"></div>
+          <div class="qcard-image-wrap" id="q-image-wrap" hidden>
+            <img id="q-image" alt="題目圖片" />
+          </div>
+        </div>
+        <div class="options" id="q-options"></div>
+      </main>
+      <footer class="quiz-footer">
+        <div class="feedback" id="q-feedback"></div>
+        <button class="btn btn-primary big" id="q-next" hidden>下一題</button>
+      </footer>
+    </section>
+
+    <!-- 對戰畫面（紅白機風格格鬥場景） -->
+    <section id="screen-battle" class="screen battle-screen">
+      <!-- 上層：頂部 HUD（HP 條 + 賽程表 + 退出） -->
+      <header class="bhud-top">
+        <button class="bquit-btn" id="b-quit" aria-label="退出對戰">✕</button>
+        <div class="bschedule">賽程表</div>
+        <div class="bhud-bars">
+          <div class="bhp-row">
+            <span class="bhp-label p1">P1</span>
+            <div class="bhp p1-hp"><div class="bhp-fill" id="p1-hp-fill" style="width:100%"></div></div>
+          </div>
+          <div class="bround">ROUND <span id="b-round">1</span> / <span id="b-total">1</span></div>
+          <div class="bhp-row right">
+            <div class="bhp p2-hp"><div class="bhp-fill" id="p2-hp-fill" style="width:100%"></div></div>
+            <span class="bhp-label p2">P2</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- 中層：格鬥場景 -->
+      <div class="bstage">
+        <!-- 城市背景圖（紅白機像素風 PNG） -->
+        <img class="bstage-bg-img" src="images/sprites/background.png" alt="" />
+        <!-- 對白框 (KO 時跳出) -->
+        <div class="bbubble bbubble-p1" id="b-bubble-p1" hidden><span id="b-bubble-p1-text"></span></div>
+        <div class="bbubble bbubble-p2" id="b-bubble-p2" hidden><span id="b-bubble-p2-text"></span></div>
+        <!-- P1 角色 (紅色機甲戰士) -->
+        <div class="fighter p1" id="p1-fighter">
+          <img src="images/sprites/fighter-p1.png" alt="P1 角色" />
+        </div>
+        <!-- P2 角色 (綠衣武術家) -->
+        <div class="fighter p2" id="p2-fighter">
+          <img src="images/sprites/fighter-p2.png" alt="P2 角色" />
+        </div>
+        <!-- 攻擊特效 -->
+        <div class="bhit" id="b-hit-p1" hidden>POW!</div>
+        <div class="bhit" id="b-hit-p2" hidden>BAM!</div>
+      </div>
+
+      <!-- 下層：題目 + 選項 -->
+      <main class="battle-body">
+        <div class="bqcard">
+          <div class="bqtext" id="b-q-text"></div>
+          <div class="bqimg-wrap" id="b-q-image-wrap" hidden>
+            <img id="b-q-image" alt="題目圖" />
+          </div>
+        </div>
+        <div class="boptions" id="b-options"></div>
+        <div class="bstatusrow">
+          <div class="bstatus p1" id="b-p1-status">等候作答…</div>
+          <div class="bstatus p2" id="b-p2-status">等候作答…</div>
+        </div>
+        <div class="bkeys">
+          <span class="p1-key">P1: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span>
+          <span class="vs-small">vs</span>
+          <span class="p2-key">P2: <kbd>0</kbd><kbd>-</kbd><kbd>=</kbd><kbd>\</kbd></span>
+        </div>
+      </main>
+
+      <footer class="battle-footer">
+        <div class="bbanner" id="b-banner"></div>
+        <button class="btn btn-primary big" id="b-next" hidden>下一回合</button>
+      </footer>
+
+      <!-- KO 全螢幕特效 -->
+      <div class="ko-overlay" id="ko-overlay" hidden>
+        <div class="ko-text" id="ko-text">K.O.</div>
+      </div>
+    </section>
+
+    <!-- 結算畫面 -->
+    <section id="screen-result" class="screen">
+      <div class="result-wrap">
+        <div class="result-medal" id="result-medal">🎉</div>
+        <h2 id="result-title">完成！</h2>
+        <p class="result-name" id="result-name"></p>
+        <div class="result-stats">
+          <div><div class="stat-num" id="result-correct">0</div><div class="stat-label">答對</div></div>
+          <div><div class="stat-num" id="result-wrong">0</div><div class="stat-label">答錯</div></div>
+          <div><div class="stat-num" id="result-rate">0%</div><div class="stat-label">正確率</div></div>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-primary big" id="result-retry">再玩一次</button>
+          <button class="btn big" id="result-wrongs" hidden>練習錯題</button>
+          <button class="btn" data-go="categories">換一個題庫</button>
+          <button class="btn" data-go="home">回主選單</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 關於頁 -->
+    <section id="screen-about" class="screen">
+      <header class="topbar">
+        <button class="iconbtn" data-go="home" aria-label="回主選單">←</button>
+        <h2>關於 / 操作說明</h2>
+      </header>
+      <div class="about-body">
+        <h3>遊戲玩法</h3>
+        <p>從題庫選一份題目，每題會顯示題幹與 2~4 個選項，點選你認為正確的答案。答完會顯示對錯，按「下一題」繼續，全部答完顯示結算。</p>
+        <h3>Mac 鍵盤快捷鍵</h3>
+        <ul>
+          <li><b>1 / 2 / 3 / 4</b> 或 <b>A / B / C / D</b> — 選擇答案</li>
+          <li><b>Enter</b> 或 <b>空白鍵</b> — 下一題 / 開始 / 再玩一次</li>
+          <li><b>Esc</b> — 退出 / 返回上一層</li>
+          <li><b>/</b> — 在題庫列表中聚焦搜尋框</li>
+        </ul>
+        <h3>iOS 上的安裝（加到主畫面變 App）</h3>
+        <ol>
+          <li>用 iPhone Safari 開啟此頁面</li>
+          <li>點下方分享圖示</li>
+          <li>選「加入主畫面」</li>
+          <li>從主畫面打開時會以全螢幕模式執行，看起來就像原生 App</li>
+        </ol>
+        <h3>題目來源</h3>
+        <p>本版本由「DD2P_Share8C_2017 (AJ)」題庫重製，保留 47 個原版題庫共 13,094 題，包含國中小數學 / 國文 / 英文 / 歷史 / 公民 / 注音等。</p>
+        <h3>注音題顯示</h3>
+        <p>原版題庫中 [ㄓㄨ ㄧㄣ] 格式會以注音符號顯示在文字旁邊（類似日文振り仮名）。</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

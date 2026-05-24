@@ -1,0 +1,26 @@
+{
+  "name": "答答二人組 DD2P",
+  "short_name": "答答二人組",
+  "description": "DD2P 答答二人組猜謎遊戲 — HTML5 iOS 重製版，內含 13,000+ 題國中小教學題庫。",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
